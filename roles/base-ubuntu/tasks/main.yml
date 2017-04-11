@@ -1,0 +1,23 @@
+---
+- name: パッケージのアップデート
+  become: true
+  apt: pkg={{item}} update_cache=yes cache_valid_time=3600
+  with_items:
+    - zsh
+    - git
+
+- name: 現在のログインシェルをチェック
+  command: test "$SHELL" = /bin/zsh
+  ignore_errors: true
+  register: shell_is_zsh
+  changed_when: false
+
+- name: ログインシェルをzshに変更
+  become: yes
+  command: chsh -s '/bin/zsh' {{username}}
+  when: shell_is_zsh.rc == 1
+  
+- name: タイムゾーンを変更 
+  become: yes
+  timezone:
+    name: "{{timezone}}"

@@ -1,0 +1,51 @@
+- name: dotfilesが取得されているかをチェック
+  command: test -e ~/.git
+  register: dotfiles_exist
+  ignore_errors: true
+  changed_when: false
+  
+- name: dotfilesをgithubから取得
+  become: false
+  git:
+    repo: git@github.com:kentrino/dotfiles.git
+    dest: /tmp/dotfiles
+    accept_hostkey: yes
+    version: "{{_branch}}"
+    # デフォルトではrecursiveにcloneする
+    recursive: false
+  register: pull_dotfiles
+  # fatal: Not a git repository (or any of the parent directories): .git
+  # となる場合に取得
+  when: dotfiles_exist.rc != 0
+
+- name: 移動するファイルをリスト
+  command: ls -a /tmp/dotfiles
+  register: files_to_copy
+  when: pull_dotfiles | changed
+  ignore_errors: true
+  changed_when: false
+
+- name: 古いdotfilesをクリア
+  command: rm -fr ~/{{item}}
+  with_items: "{{files_to_copy.stdout_lines}}"
+  when:
+    - pull_dotfiles | changed
+    - item != '.'
+    - item != '..'
+
+- name: dotfilesをコピー
+  command: mv /tmp/dotfiles/{{item}} ~/
+  with_items: "{{files_to_copy.stdout_lines}}"
+  when:
+    - pull_dotfiles | changed
+    - item != '.'
+    - item != '..'
+
+- name: クローンしたdotfilesを削除
+  command: rm -rf /tmp/dotfiles
+  when: pull_dotfiles | changed
+# recursiveにクローンしてもうまくいかない
+
+- name: git submodule update --init --recursive
+  command: git submodule update --init --recursive
+  when: pull_dotfiles | changed

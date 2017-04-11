@@ -1,0 +1,17 @@
+- name: _ssh_keyが定義されているか確認
+  fail: msg='You must define _ssh_key'
+  when:
+    - _ssh_key is not defined
+    - _ssh_key == ''
+
+- name: ~/.ssh/config作成
+  template:
+    src: config.j2
+    dest: ~/.ssh/config
+    mode: 400
+
+- name: 秘密鍵の転送
+  copy:
+    content: "{{_ssh_key}}"
+    dest: ~/.ssh/github
+    mode: '0400'
