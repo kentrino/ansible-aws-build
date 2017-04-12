@@ -25,27 +25,29 @@
   ignore_errors: true
   changed_when: false
 
-- name: 古いdotfilesをクリア
-  command: rm -fr ~/{{item}}
+- name: 古いdotfilesをクリアした後にdotfilesを移動
+  shell: |
+    if [ -e ~/{{item}} ]; then
+      rm -fr ~/{{item}}
+    fi
+    mv /tmp/dotfiles/{{item}} ~/
+    
   with_items: "{{files_to_copy.stdout_lines}}"
   when:
     - pull_dotfiles | changed
+    # for safe
+    - item != ''
     - item != '.'
     - item != '..'
 
-- name: dotfilesをコピー
-  command: mv /tmp/dotfiles/{{item}} ~/
-  with_items: "{{files_to_copy.stdout_lines}}"
-  when:
-    - pull_dotfiles | changed
-    - item != '.'
-    - item != '..'
+- name: 空の.zshrc_varsを作成
+  create_vars: 
 
 - name: クローンしたdotfilesを削除
   command: rm -rf /tmp/dotfiles
   when: pull_dotfiles | changed
+  
 # recursiveにクローンしてもうまくいかない
-
 - name: git submodule update --init --recursive
   command: git submodule update --init --recursive
   when: pull_dotfiles | changed
