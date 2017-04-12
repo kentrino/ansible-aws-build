@@ -1,7 +1,9 @@
 ---
-- name: サーバー環境構築
+- name: 作業用環境を構築
   user: ubuntu
   hosts: all
   roles:
     - base-ubuntu
-    - { role: dotfiles, _ssh_key: "{{ssh_keys.github}}" }
+    - { role: dotfiles, ssh_key: "{{ssh_keys.github}}" }
+    - peco
+    - { role: python }
