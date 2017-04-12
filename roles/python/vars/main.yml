@@ -1,2 +1,3 @@
 ---
-version: '3.3.4'
+version: '3.6.1'
+apt_or_yum: 'apt'
