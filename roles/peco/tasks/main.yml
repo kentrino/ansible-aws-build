@@ -1,0 +1,29 @@
+- name: インストール確認
+  shell: /usr/local/bin/peco --version | grep {{version}} 
+  register: installed
+  ignore_errors: true
+  changed_when: false
+
+- name: ダウンロード
+  get_url: 
+    url: https://github.com/peco/peco/releases/download/v{{version}}/peco_linux_amd64.tar.gz
+    dest: /tmp/peco_linux_amd64.tar.gz
+  register: download
+  when: 
+    - installed.rc != 0
+
+- name: 解凍
+  unarchive:
+    src: /tmp/peco_linux_amd64.tar.gz
+    dest: /tmp
+    remote_src: true
+  when:
+    - installed.rc != 0
+    - download | success
+
+- name: インストール
+  become: true
+  command: mv /tmp/peco_linux_amd64/peco /usr/local/bin/peco
+  when:
+    - installed.rc != 0
+    - download | success
