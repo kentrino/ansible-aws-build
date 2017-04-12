@@ -1,0 +1,35 @@
+- name: git clone pyenv
+  git:
+    repo: git://github.com/yyuu/pyenv.git
+    dest: ~/.pyenv
+  register: pyenv_clone
+
+- name: パッケージのアップデート (apt-get)
+  become: true
+  apt: pkg={{item}} update_cache=yes cache_valid_time=3600
+  with_items:
+    - git
+    - gcc 
+    - make
+    - openssl
+    - libssl-dev
+    - libbz2-dev
+    - libreadline-dev
+    - libsqlite3-dev
+  when: apt_or_yum == 'apt'
+ 
+- name: register python version
+  command: ~/.pyenv/bin/pyenv versions
+  register: current_versions
+  ignore_errors: true
+  changed_when: false
+
+- name: pyenv install
+  shell: ~/.pyenv/bin/pyenv install {{version}}
+  when: 
+    - current_versions.stdout.find(version) == -1
+
+- name: pyenv rehash
+  command: ~/.pyenv/bin/pyenv rehash
+  when: 
+    - current_versions.stdout.find(version) == -1
